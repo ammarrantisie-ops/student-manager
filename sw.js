@@ -1,4 +1,4 @@
-const CACHE_NAME = "teacher-manager-v1";
+const CACHE_NAME = "teacher-manager-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -23,11 +23,25 @@ self.addEventListener("activate", (e) => {
   );
 });
 
-// Cache-first with network fallback for same-origin assets (mainly hashed build files).
+// HTML navigations: network-first (auto-updates when new version is deployed), falls back to cache offline.
+// Other same-origin GET assets: cache-first with network fallback (mainly hashed build files).
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
   const url = new URL(e.request.url);
   if (url.origin !== self.location.origin) return;
+  const isNav = e.request.mode === "navigate";
+  if (isNav) {
+    e.respondWith(
+      fetch(e.request)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((c) => c.put(e.request, copy)).catch(() => {});
+          return res;
+        })
+        .catch(() => caches.match(e.request).then((cached) => cached || caches.match(new URL("./", BASE).href)))
+    );
+    return;
+  }
   // Never cache app data requests; the app stores data in localStorage.
   e.respondWith(
     caches.match(e.request).then(
