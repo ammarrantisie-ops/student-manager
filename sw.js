@@ -1,4 +1,4 @@
-const CACHE_NAME = "teacher-manager-v2";
+const CACHE_NAME = "teacher-manager-v3";
 const APP_SHELL = [
   "./",
   "./index.html",
